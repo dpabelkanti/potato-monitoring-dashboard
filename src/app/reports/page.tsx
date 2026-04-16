@@ -13,6 +13,24 @@ const reports = [
 ];
 
 export default function ReportsPage() {
+  const handleDownload = (report: any) => {
+    // Simulate generating and downloading a file
+    const content = `This is the dummy content for ${report.name} (${report.id}). Generated on ${new Date().toLocaleDateString()}`;
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    
+    // Choose appropriate extension
+    const ext = report.type.toLowerCase();
+    link.href = url;
+    link.download = `${report.name.replace(/\s+/g, '_')}_${report.date}.${ext}`;
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="flex h-screen bg-[#f8fafc] font-sans">
       <Sidebar />
@@ -81,7 +99,10 @@ export default function ReportsPage() {
                       <td className="px-8 py-5 text-sm font-medium text-gray-500">{report.date}</td>
                       <td className="px-8 py-5 text-sm font-medium text-gray-400">{report.size}</td>
                       <td className="px-8 py-5 text-right">
-                        <button className="text-[var(--primary)] font-bold text-xs uppercase tracking-widest hover:underline px-4 py-2 hover:bg-amber-50 rounded-xl transition-all">
+                        <button 
+                          onClick={() => handleDownload(report)}
+                          className="text-[var(--primary)] font-bold text-xs uppercase tracking-widest hover:underline px-4 py-2 hover:bg-amber-50 rounded-xl transition-all"
+                        >
                           Download
                         </button>
                       </td>
