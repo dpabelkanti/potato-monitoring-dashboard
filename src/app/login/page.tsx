@@ -107,16 +107,16 @@ export default function LoginPage() {
             )}
 
             <div className="space-y-2">
-              <label className="text-sm font-bold text-gray-700 ml-1">Email Address</label>
+              <label className="text-sm font-bold text-gray-700 ml-1">Username or Email</label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
                   <Mail size={18} />
                 </div>
                 <input
-                  type="email"
+                  type="text"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="admin@cropsdoctor.com"
+                  placeholder="Username or email"
                   className="w-full pl-11 pr-4 py-3.5 bg-white border border-gray-200 rounded-2xl focus:ring-4 focus:ring-[var(--primary)]/20 focus:border-[var(--primary)] transition-all outline-none text-gray-900 font-medium placeholder:text-gray-400 shadow-sm"
                   required
                 />
