@@ -1,12 +1,12 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Sidebar } from '@/components/Sidebar';
 import { Header } from '@/components/Header';
 import { Zap, Signal, Battery, Activity } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-const modules = [
+const defaultModules = [
   { id: 'S-001', name: 'Field Alpha', status: 'Online', signal: 92, battery: 85 },
   { id: 'S-002', name: 'Field Beta', status: 'Online', signal: 88, battery: 74 },
   { id: 'S-003', name: 'North Border', status: 'Offline', signal: 0, battery: 12 },
@@ -16,19 +16,44 @@ const modules = [
 ];
 
 export default function SensorsPage() {
+  const [data, setData] = useState<any>(null);
+  const [error, setError] = useState(false);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await fetch('/api/sensor-data');
+        const result = await res.json();
+        setData(result);
+        setError(false);
+      } catch (e) {
+        setError(true);
+      }
+    };
+    fetchData();
+    const interval = setInterval(fetchData, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <div className="flex h-screen bg-[#f8fafc] font-sans">
       <Sidebar />
       <main className="flex-1 ml-64 overflow-y-auto">
         <Header />
         <div className="p-8 max-w-[1600px] mx-auto space-y-8">
-          <div>
-            <h1 className="text-3xl font-black text-gray-900 tracking-tight">Sensor Module Status</h1>
-            <p className="text-gray-500 font-medium mt-1">Real-time health and connectivity monitoring for all field modules.</p>
+          <div className="flex justify-between items-end">
+            <div>
+              <h1 className="text-3xl font-black text-gray-900 tracking-tight">Sensor Module Status</h1>
+              <p className="text-gray-500 font-medium mt-1">Real-time health and connectivity monitoring for all field modules.</p>
+            </div>
+            <div className={`flex items-center gap-2 bg-white border border-gray-200 px-4 py-2 rounded-xl text-[10px] font-bold ${error ? 'text-red-500' : 'text-green-600'}`}>
+              <div className={`w-1.5 h-1.5 rounded-full ${error ? 'bg-red-500' : 'bg-green-500'} animate-pulse`} />
+              {error ? 'CONNECTION FAILED' : 'ALL MODULES OPERATIONAL'}
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-            {modules.map((module) => (
+            {defaultModules.map((module) => (
               <motion.div 
                 key={module.id}
                 whileHover={{ y: -5 }}

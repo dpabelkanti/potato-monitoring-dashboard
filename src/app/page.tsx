@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Sidebar } from '@/components/Sidebar';
 import { Header } from '@/components/Header';
 import { MetricCard } from '@/components/MetricCard';
@@ -14,27 +14,53 @@ import {
 import { motion } from 'framer-motion';
 
 export default function Dashboard() {
-  // Static data for pure frontend demonstration
-  const data = {
-    totalYield: '1,248',
-    activeDevices: { total: 7, online: 6, offline: 1 },
-    sensorStatus: { active: 6, total: 7 },
-    ultrasonicData: [
-      { time: '00:00', distance: 28 },
-      { time: '04:00', distance: 32 },
-      { time: '08:00', distance: 25 },
-      { time: '12:00', distance: 35 },
-      { time: '16:00', distance: 30 },
-      { time: '20:00', distance: 33 },
-      { time: '24:00', distance: 29 },
-    ],
-    massData: [
-      { time: '00:00', weight: 400000 },
-      { time: '06:00', weight: 600000 },
-      { time: '12:00', weight: 850000 },
-      { time: '18:00', weight: 1100000 },
-      { time: '24:00', weight: 1248000 },
-    ]
+  const [data, setData] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchSensorData = async () => {
+    try {
+      const response = await fetch('/api/sensor-data');
+      if (!response.ok) throw new Error('Failed to fetch sensor data');
+      const result = await response.json();
+      setData(result);
+      setError(null);
+    } catch (err: any) {
+      console.error('Error fetching sensor data:', err);
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    // Initial fetch
+    fetchSensorData();
+
+    // Set up polling every 5 seconds
+    const interval = setInterval(fetchSensorData, 5000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  if (isLoading && !data) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-[#f8fafc]">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-[var(--primary)] border-t-transparent rounded-full animate-spin" />
+          <p className="font-bold text-gray-500">Connecting to sensor array...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Fallback for when data hasn't loaded or error occurs
+  const displayData = data || {
+    totalYield: 0,
+    activeDevices: { total: 0, online: 0, offline: 0 },
+    sensorStatus: { active: 0, total: 0 },
+    ultrasonicData: [],
+    massData: []
   };
 
   return (
@@ -59,9 +85,9 @@ export default function Dashboard() {
             </div>
             
             <div className="flex items-center gap-3">
-              <span className="flex items-center gap-2 bg-white border border-gray-200 px-5 py-2.5 rounded-2xl text-[11px] font-bold text-gray-600 shadow-sm">
-                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                DATABASE CONNECTED
+              <span className={`flex items-center gap-2 bg-white border border-gray-200 px-5 py-2.5 rounded-2xl text-[11px] font-bold shadow-sm ${error ? 'text-red-500' : 'text-gray-600'}`}>
+                <div className={`w-2 h-2 rounded-full ${error ? 'bg-red-500' : 'bg-green-500'} animate-pulse`} />
+                {error ? 'CONNECTION ERROR' : 'LIVE DATA STREAMING'}
               </span>
               <button className="bg-[var(--primary)] hover:bg-[var(--primary)]/90 text-white px-6 py-2.5 rounded-2xl text-sm font-bold shadow-lg shadow-amber-500/20 transition-all active:scale-95">
                 Export Data
@@ -73,7 +99,7 @@ export default function Dashboard() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <MetricCard 
               title="Total Yield" 
-              value={data.totalYield}
+              value={displayData.totalYield?.toLocaleString() || '0'}
               unit="kg"
               icon={TrendingUp}
               trend="up"
@@ -83,14 +109,14 @@ export default function Dashboard() {
             />
             <MetricCard 
               title="Active Devices" 
-              value={data.activeDevices.total}
+              value={displayData.activeDevices.total}
               icon={Cpu}
               statusColor="var(--chart-1)"
-              subtitle={`${data.activeDevices.online} Online, ${data.activeDevices.offline} Offline`}
+              subtitle={`${displayData.activeDevices.online} Online, ${displayData.activeDevices.offline} Offline`}
             />
             <MetricCard 
               title="Sensor module status" 
-              value={`${data.sensorStatus.active}/${data.sensorStatus.total}`}
+              value={`${displayData.sensorStatus.active}/${displayData.sensorStatus.total}`}
               icon={Activity}
               statusColor="var(--success)"
               subtitle="Active modules across the field"
@@ -100,11 +126,11 @@ export default function Dashboard() {
           {/* Charts Grid */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <UltrasonicChart 
-              data={data.ultrasonicData} 
+              data={displayData.ultrasonicData} 
               title="Ultrasonic sensor array 1 data" 
             />
             <MassChart 
-              data={data.massData} 
+              data={displayData.massData} 
               title="Mass measuring device - cumulative weight" 
             />
           </div>
