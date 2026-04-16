@@ -14,13 +14,26 @@ const reports = [
 
 export default function ReportsPage() {
   const handleDownload = (report: any) => {
-    // Simulate generating and downloading a file
-    const content = `This is the dummy content for ${report.name} (${report.id}). Generated on ${new Date().toLocaleDateString()}`;
-    const blob = new Blob([content], { type: 'text/plain' });
+    let content = "";
+    let mimeType = "text/plain";
+    
+    // Simulate realistic dummy data for each type
+    if (report.type === 'PDF') {
+      // Smallest valid minimal PDF header/structure to prevent viewer errors
+      content = `%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n2 0 obj<</Type/Pages/Count 1/Kids[3 0 R]>>endobj\n3 0 obj<</Type/Page/MediaBox[0 0 612 792]/Parent 2 0 R/Contents 4 0 R>>endobj\n4 0 obj<</Length 50>>stream\nBT /F1 24 Tf 100 700 Td (${report.name}) Tj ET\nendstream\nendobj\nxref\n0 5\n0000000000 65535 f\n0000000009 00000 n\n0000000052 00000 n\n0000000101 00000 n\n0000000200 00000 n\ntrailer<</Size 5/Root 1 0 R>>\nstartxref\n300\n%%EOF`;
+      mimeType = "application/pdf";
+    } else if (report.type === 'CSV') {
+      content = `ID,Name,Date,Value\n${report.id},${report.name},${report.date},Success`;
+      mimeType = "text/csv";
+    } else {
+      content = `Report: ${report.name}\nGenerated: ${new Date().toISOString()}`;
+      mimeType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+    }
+
+    const blob = new Blob([content], { type: mimeType });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     
-    // Choose appropriate extension
     const ext = report.type.toLowerCase();
     link.href = url;
     link.download = `${report.name.replace(/\s+/g, '_')}_${report.date}.${ext}`;
